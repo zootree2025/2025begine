@@ -1,0 +1,92 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>易經六爻</title>
+  <style>
+    .yao {
+      display: block;
+      width: 100px;
+      height: 20px;
+      margin: 10px auto;
+      cursor: pointer;
+      text-align: center;
+      line-height: 20px;
+      color: white;
+      font-weight: bold;
+    }
+    .yin {
+      background-color: blue;
+    }
+    .yang {
+      background-color: red;
+    }
+    .container {
+      text-align: center;
+    }
+    .info {
+      margin-top: 20px;
+    }
+    #guaName {
+      font-size: 20px;
+      font-weight: bold;
+    }
+    #yaoName {
+      margin-left: 20px;
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <div id="yaos">
+      <div class="yao yin" onclick="toggleYao(this, 6)">初爻</div>
+      <div class="yao yin" onclick="toggleYao(this, 5)">二爻</div>
+      <div class="yao yin" onclick="toggleYao(this, 4)">三爻</div>
+      <div class="yao yin" onclick="toggleYao(this, 3)">四爻</div>
+      <div class="yao yin" onclick="toggleYao(this, 2)">五爻</div>
+      <div class="yao yin" onclick="toggleYao(this, 1)">上爻</div>
+    </div>
+    <div class="info">
+      <div id="guaName">卦名：---</div>
+      <div id="yaoName">爻名：---</div>
+    </div>
+  </div>
+
+  <script>
+    function toggleYao(element, yaoIndex) {
+      // 切換爻的狀態
+      if (element.classList.contains('yin')) {
+        element.classList.remove('yin');
+        element.classList.add('yang');
+      } else {
+        element.classList.remove('yang');
+        element.classList.add('yin');
+      }
+      
+      // 更新爻名
+      const yaoNames = ["初爻", "二爻", "三爻", "四爻", "五爻", "上爻"];
+      document.getElementById("yaoName").textContent = "爻名：" + yaoNames[6 - yaoIndex];
+      
+      // 更新卦名
+      const yaos = document.querySelectorAll(".yao");
+      let binary = "";
+      yaos.forEach(yao => {
+        binary += yao.classList.contains('yang') ? "1" : "0";
+      });
+      document.getElementById("guaName").textContent = "卦名：" + getHexagramName(binary);
+    }
+
+    function getHexagramName(binary) {
+      // 假設的卦名表，需自行擴充
+      const hexagramTable = {
+        "000000": "坤卦",
+        "111111": "乾卦",
+        "010101": "坎卦",
+        "101010": "離卦"
+      };
+      return hexagramTable[binary] || "未知卦名";
+    }
+  </script>
+</body>
+</html>
