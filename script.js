@@ -1,5 +1,5 @@
 document.addEventListener('DOMContentLoaded', function() {
-    // 顏色選擇器預覽
+    // 顏色預覽功能
     const fontColor = document.getElementById('fontColor');
     const bgColor = document.getElementById('bgColor');
     const fontColorPreview = document.getElementById('fontColorPreview');
@@ -17,102 +17,69 @@ document.addEventListener('DOMContentLoaded', function() {
     fontColorPreview.style.backgroundColor = fontColor.value;
     bgColorPreview.style.backgroundColor = bgColor.value;
     
-    // 轉換按鈕點擊處理
-    const convertBtn = document.getElementById('convertBtn');
-    const resultDiv = document.getElementById('result');
-    const downloadLink = document.getElementById('downloadLink');
-    
-    // 改為按鈕點擊事件而非表單提交
-    convertBtn.addEventListener('click', function() {
-        const txtFile = document.getElementById('txtFile').files[0];
-        if (!txtFile) {
-            alert('請選擇 TXT 檔案');
+    // 轉換按鈕點擊事件
+    document.getElementById('convertBtn').addEventListener('click', function() {
+        const fileInput = document.getElementById('txtFile');
+        const file = fileInput.files[0];
+        
+        if (!file) {
+            alert('請選擇一個 TXT 文件');
             return;
         }
         
-        const fontColorValue = hexToRgb(fontColor.value);
-        const bgColorValue = hexToRgb(bgColor.value);
-        
-        convertBtn.disabled = true;
-        convertBtn.textContent = '處理中...';
-        
-        // 讀取 TXT 檔案
         const reader = new FileReader();
         reader.onload = function(e) {
             const content = e.target.result;
-            
-            // 創建 PPT
-            createPptx(content, fontColorValue, bgColorValue)
-                .then(pptxBlob => {
-                    // 創建下載連結
-                    const url = URL.createObjectURL(pptxBlob);
-                    downloadLink.href = url;
-                    downloadLink.download = 'presentation.pptx';
-                    
-                    // 顯示結果區域
-                    resultDiv.classList.remove('hidden');
-                    window.scrollTo(0, resultDiv.offsetTop);
-                })
-                .catch(error => {
-                    alert('生成 PPT 時發生錯誤: ' + error.message);
-                })
-                .finally(() => {
-                    convertBtn.disabled = false;
-                    convertBtn.textContent = '轉換';
-                });
+            createPPT(content, fontColor.value, bgColor.value);
         };
-        
-        reader.onerror = function() {
-            alert('讀取檔案時發生錯誤');
-            convertBtn.disabled = false;
-            convertBtn.textContent = '轉換';
-        };
-        
-        reader.readAsText(txtFile, 'UTF-8');
+        reader.readAsText(file, 'UTF-8');
     });
     
-    // 將十六進制顏色轉換為 RGB 物件
-    function hexToRgb(hex) {
-        hex = hex.replace(/^#/, '');
-        const bigint = parseInt(hex, 16);
-        return {
-            r: (bigint >> 16) & 255,
-            g: (bigint >> 8) & 255,
-            b: bigint & 255
-        };
-    }
-    
-    // 創建 PPT 檔案
-    async function createPptx(content, fontColor, bgColor) {
-        // 創建 PPT 實例
+    // 創建 PPT 函數
+    function createPPT(content, fontColor, bgColor) {
+        // 使用 PptxGenJS 創建 PPT
         const pptx = new PptxGenJS();
         
-        // 以兩個以上空白行為分頁依據
-        const blocks = content.split(/\n\s*\n/).filter(block => block.trim());
+        // 設置默認幻燈片屬性
+        pptx.defineLayout({ name: 'LAYOUT_16x9', width: 10, height: 5.625 });
+        pptx.layout = 'LAYOUT_16x9';
         
-        for (const block of blocks) {
-            // 創建新投影片
+        // 分割內容為幻燈片
+        const slides = content.split(/\n{3,}/); // 兩個以上空白行分隔
+        
+        slides.forEach(slideContent => {
+            if (slideContent.trim() === '') return;
+            
+            // 創建新幻燈片
             const slide = pptx.addSlide();
             
-            // 設置背景色
-            slide.background = { color: `RGB(${bgColor.r},${bgColor.g},${bgColor.b})` };
+            // 設置背景顏色
+            slide.background = { color: bgColor };
             
-            // 使用 /N 作為內頁換行
-            const lines = block.split('/N').map(line => line.trim());
+            // 處理換行符 /N
+            const processedContent = slideContent.replace(/\/N/g, '\n');
             
-            // 添加文字
-            slide.addText(lines, {
-                x: 1,
-                y: 1,
-                w: 8,
-                h: 5.5,
-                fontSize: 32,
-                color: `RGB(${fontColor.r},${fontColor.g},${fontColor.b})`,
-                breakLine: true
+            // 添加文本框
+            slide.addText(processedContent, {
+                x: 0.5,
+                y: 0.5,
+                w: '90%',
+                h: '80%',
+                color: fontColor,
+                fontSize: 24,
+                align: 'left',
+                valign: 'top'
             });
-        }
+        });
         
-        // 生成 PPT 並返回 Blob
-        return pptx.writeFile({ outputType: 'blob' });
+        // 保存 PPT
+        pptx.writeFile({ fileName: 'presentation.pptx' })
+            .then(() => {
+                document.getElementById('result').classList.remove('hidden');
+            })
+            .catch(err => {
+                console.error('PPT 生成失敗:', err);
+                alert('PPT 生成失敗，請查看控制台獲取詳細信息。');
+            });
     }
 });
