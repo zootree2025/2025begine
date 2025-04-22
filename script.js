@@ -37,49 +37,54 @@ document.addEventListener('DOMContentLoaded', function() {
     
     // 創建 PPT 函數
     function createPPT(content, fontColor, bgColor) {
-        // 使用 PptxGenJS 創建 PPT
-        const pptx = new PptxGenJS();
-        
-        // 設置默認幻燈片屬性
-        pptx.defineLayout({ name: 'LAYOUT_16x9', width: 10, height: 5.625 });
-        pptx.layout = 'LAYOUT_16x9';
-        
-        // 分割內容為幻燈片
-        const slides = content.split(/\n{3,}/); // 兩個以上空白行分隔
-        
-        slides.forEach(slideContent => {
-            if (slideContent.trim() === '') return;
+        try {
+            // 使用 PptxGenJS 創建 PPT
+            const pptx = new pptxgen();
             
-            // 創建新幻燈片
-            const slide = pptx.addSlide();
+            // 設置默認幻燈片屬性
+            pptx.defineLayout({ name: 'LAYOUT_16x9', width: 10, height: 5.625 });
+            pptx.layout = 'LAYOUT_16x9';
             
-            // 設置背景顏色
-            slide.background = { color: bgColor };
+            // 分割內容為幻燈片
+            const slides = content.split(/\n{3,}/); // 兩個以上空白行分隔
             
-            // 處理換行符 /N
-            const processedContent = slideContent.replace(/\/N/g, '\n');
-            
-            // 添加文本框
-            slide.addText(processedContent, {
-                x: 0.5,
-                y: 0.5,
-                w: '90%',
-                h: '80%',
-                color: fontColor,
-                fontSize: 24,
-                align: 'left',
-                valign: 'top'
+            slides.forEach(slideContent => {
+                if (slideContent.trim() === '') return;
+                
+                // 創建新幻燈片
+                const slide = pptx.addSlide();
+                
+                // 設置背景顏色
+                slide.background = { color: bgColor };
+                
+                // 處理換行符 /N
+                const processedContent = slideContent.replace(/\/N/g, '\n');
+                
+                // 添加文本框
+                slide.addText(processedContent, {
+                    x: 0.5,
+                    y: 0.5,
+                    w: '90%',
+                    h: '80%',
+                    color: fontColor,
+                    fontSize: 24,
+                    align: 'left',
+                    valign: 'top'
+                });
             });
-        });
-        
-        // 保存 PPT
-        pptx.writeFile({ fileName: 'presentation.pptx' })
-            .then(() => {
-                document.getElementById('result').classList.remove('hidden');
-            })
-            .catch(err => {
-                console.error('PPT 生成失敗:', err);
-                alert('PPT 生成失敗，請查看控制台獲取詳細信息。');
-            });
+            
+            // 保存 PPT
+            pptx.writeFile({ fileName: 'presentation.pptx' })
+                .then(() => {
+                    document.getElementById('result').classList.remove('hidden');
+                })
+                .catch(err => {
+                    console.error('PPT 生成失敗:', err);
+                    alert('PPT 生成失敗: ' + err.message);
+                });
+        } catch (error) {
+            console.error('生成 PPT 時發生錯誤:', error);
+            alert('生成 PPT 時發生錯誤: ' + error.message);
+        }
     }
 });
