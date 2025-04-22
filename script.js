@@ -39,12 +39,15 @@ document.addEventListener('DOMContentLoaded', function() {
     function createPPT(content, fontColor, bgColor) {
         try {
             // 检查 PptxGenJS 是否可用
-            if (typeof pptxgen !== 'function') {
+            if (typeof PptxGenJS === 'function') {
+                // 如果 PptxGenJS 是一个函数（旧版本可能是这样）
+                var pptx = new PptxGenJS();
+            } else if (typeof pptxgen === 'function') {
+                // 如果 pptxgen 是一个函数（新版本是这样）
+                var pptx = new pptxgen();
+            } else {
                 throw new Error('PptxGenJS 库未正确加载，请刷新页面重试');
             }
-            
-            // 使用 PptxGenJS 創建 PPT
-            const pptx = new pptxgen();
             
             // 設置默認幻燈片屬性
             pptx.defineLayout({ name: 'LAYOUT_16x9', width: 10, height: 5.625 });
