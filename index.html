@@ -7,15 +7,6 @@
     <link rel="stylesheet" href="style.css">
     <!-- 使用適用於瀏覽器的 PptxGenJS 版本 -->
     <script src="./pptxgen.bundle.js"></script>
-    <style>
-        /* 預設樣式 */
-        .paragraph {
-            font-size: 16px;
-        }
-        .content {
-            font-size: 16px;
-        }
-    </style>
 </head>
 <body>
     <div class="container">
@@ -47,28 +38,6 @@
                 </select>
             </div>
 
-            <!-- 段落字體大小選擇 -->
-            <div class="form-group">
-                <label for="paragraph-font-size">選擇段落字體大小:</label>
-                <select id="paragraph-font-size">
-                    <option value="14px">14px</option>
-                    <option value="16px" selected>16px</option>
-                    <option value="18px">18px</option>
-                    <option value="20px">20px</option>
-                </select>
-            </div>
-
-            <!-- 內文字體大小選擇 -->
-            <div class="form-group">
-                <label for="content-font-size">選擇內文字體大小:</label>
-                <select id="content-font-size">
-                    <option value="14px">14px</option>
-                    <option value="16px" selected>16px</option>
-                    <option value="18px">18px</option>
-                    <option value="20px">20px</option>
-                </select>
-            </div>
-
             <div class="form-group">
                 <button type="button" id="convertBtn">轉換</button>
             </div>
@@ -90,29 +59,6 @@
         </div>
     </div>
 
-    <script>
-        // 取得選單元素
-        const paragraphFontSizeSelector = document.getElementById('paragraph-font-size');
-        const contentFontSizeSelector = document.getElementById('content-font-size');
-        
-        // 取得段落及內文元素
-        const paragraph = document.querySelector('.paragraph');
-        const content = document.querySelector('.content');
-        
-        // 監聽段落字體大小選擇變更
-        paragraphFontSizeSelector.addEventListener('change', (event) => {
-            paragraph.style.fontSize = event.target.value;
-        });
-        
-        // 監聽內文字體大小選擇變更
-        contentFontSizeSelector.addEventListener('change', (event) => {
-            content.style.fontSize = event.target.value;
-        });
-
-        // 初始化表單功能（現有代碼）
-        document.getElementById('convertBtn').addEventListener('click', () => {
-            alert('轉換功能觸發，但尚未實作 PPT 轉換邏輯。');
-        });
-    </script>
+    <script src="script.js"></script>
 </body>
 </html>
