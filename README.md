@@ -12,8 +12,8 @@
 
 ## 使用方法
 
-1. 訪問 [TXT 轉 PPT 工具](https://2025begine.github.io/txt-to-ppt/)
-2. 選擇您的 TXT 文字檔
+1. 訪問 [TXT 轉 PPT 工具](https://zootree2025.github.io/2025begine/)
+2.  選擇您的 TXT 文字檔
 3. 選擇字體顏色（預設為黑色）
 4. 選擇背景顏色（預設為白色）
 5. 點擊「轉換」按鈕
