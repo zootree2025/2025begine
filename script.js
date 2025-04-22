@@ -38,6 +38,11 @@ document.addEventListener('DOMContentLoaded', function() {
     // 創建 PPT 函數
     function createPPT(content, fontColor, bgColor) {
         try {
+            // 检查 PptxGenJS 是否可用
+            if (typeof pptxgen !== 'function') {
+                throw new Error('PptxGenJS 库未正确加载，请刷新页面重试');
+            }
+            
             // 使用 PptxGenJS 創建 PPT
             const pptx = new pptxgen();
             
