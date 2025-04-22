@@ -1,92 +1,54 @@
 <!DOCTYPE html>
 <html lang="zh-TW">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>易經六爻</title>
-  <style>
-    .yao {
-      display: block;
-      width: 100px;
-      height: 20px;
-      margin: 10px auto;
-      cursor: pointer;
-      text-align: center;
-      line-height: 20px;
-      color: white;
-      font-weight: bold;
-    }
-    .yin {
-      background-color: blue;
-    }
-    .yang {
-      background-color: red;
-    }
-    .container {
-      text-align: center;
-    }
-    .info {
-      margin-top: 20px;
-    }
-    #guaName {
-      font-size: 20px;
-      font-weight: bold;
-    }
-    #yaoName {
-      margin-left: 20px;
-    }
-  </style>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>TXT 轉 PPT 工具</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
 </head>
 <body>
-  <div class="container">
-    <div id="yaos">
-      <div class="yao yin" onclick="toggleYao(this, 6)">初爻</div>
-      <div class="yao yin" onclick="toggleYao(this, 5)">二爻</div>
-      <div class="yao yin" onclick="toggleYao(this, 4)">三爻</div>
-      <div class="yao yin" onclick="toggleYao(this, 3)">四爻</div>
-      <div class="yao yin" onclick="toggleYao(this, 2)">五爻</div>
-      <div class="yao yin" onclick="toggleYao(this, 1)">上爻</div>
+    <div class="container">
+        <h1>TXT 轉 PPT 工具</h1>
+        
+        <form id="convertForm" action="/convert" method="post" enctype="multipart/form-data">
+            <div class="form-group">
+                <label for="txtFile">輸入 TXT 檔案：</label>
+                <input type="file" id="txtFile" name="txtFile" accept=".txt" required>
+            </div>
+            
+            <div class="form-group">
+                <label for="fontColor">字體顏色：</label>
+                <input type="color" id="fontColor" name="fontColor" value="#000000">
+                <span class="color-preview" id="fontColorPreview"></span>
+            </div>
+            
+            <div class="form-group">
+                <label for="bgColor">背景顏色：</label>
+                <input type="color" id="bgColor" name="bgColor" value="#FFFFFF">
+                <span class="color-preview" id="bgColorPreview"></span>
+            </div>
+            
+            <div class="form-group">
+                <button type="submit" id="convertBtn">轉換</button>
+            </div>
+        </form>
+        
+        <div id="result" class="hidden">
+            <h2>轉換完成</h2>
+            <p>您的 PPT 檔案已準備好下載</p>
+            <a id="downloadLink" href="#" class="download-btn">下載 PPT</a>
+        </div>
+        
+        <div class="instructions">
+            <h3>TXT 檔案格式說明</h3>
+            <ul>
+                <li>使用兩個以上空白行分隔不同投影片</li>
+                <li>使用 /N 在同一張投影片中換行</li>
+                <li>請確保 TXT 檔案使用 UTF-8 編碼</li>
+            </ul>
+        </div>
     </div>
-    <div class="info">
-      <div id="guaName">卦名：---</div>
-      <div id="yaoName">爻名：---</div>
-    </div>
-  </div>
 
-  <script>
-    function toggleYao(element, yaoIndex) {
-      // 切換爻的狀態
-      if (element.classList.contains('yin')) {
-        element.classList.remove('yin');
-        element.classList.add('yang');
-      } else {
-        element.classList.remove('yang');
-        element.classList.add('yin');
-      }
-      
-      // 更新爻名
-      const yaoNames = ["初爻", "二爻", "三爻", "四爻", "五爻", "上爻"];
-      document.getElementById("yaoName").textContent = "爻名：" + yaoNames[6 - yaoIndex];
-      
-      // 更新卦名
-      const yaos = document.querySelectorAll(".yao");
-      let binary = "";
-      yaos.forEach(yao => {
-        binary += yao.classList.contains('yang') ? "1" : "0";
-      });
-      document.getElementById("guaName").textContent = "卦名：" + getHexagramName(binary);
-    }
-
-    function getHexagramName(binary) {
-      // 假設的卦名表，需自行擴充
-      const hexagramTable = {
-        "000000": "坤卦",
-        "111111": "乾卦",
-        "010101": "坎卦",
-        "101010": "離卦"
-      };
-      return hexagramTable[binary] || "未知卦名";
-    }
-  </script>
+    <script src="{{ url_for('static', filename='script.js') }}"></script>
 </body>
 </html>
