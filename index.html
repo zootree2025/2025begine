@@ -90,6 +90,16 @@
   <label for="fontSelect">選擇字型：</label>
   <select id="fontSelect"></select>
 
+  <label for="fontSizeSelect">選擇字體大小：</label>
+  <select id="fontSizeSelect">
+    <option value="32">32</option>
+    <option value="36">36</option>
+    <option value="40">40</option>
+    <option value="44" selected>44</option>
+    <option value="48">48</option>
+    <option value="52">52</option>
+  </select>
+
   <button onclick="convertWordToPPT()">轉換成 PPTX</button>
 
   <div id="status"></div>
@@ -118,7 +128,7 @@
   <script>
     const chineseFonts = [
       "微軟正黑體", "標楷體", "細明體", "宅在家麥克筆", "華康中黑體",
-      "華康仿宋體", "Microsoft Tai Le", "新細明體", "Noto Sans CJK SC"
+      "華康仿宋體", "華康細明體", "新細明體", "@標楷體"
     ];
 
     const fontSelect = document.getElementById("fontSelect");
@@ -158,6 +168,7 @@
         const textColor = document.getElementById("textColor").value;
         const bgColor = document.getElementById("bgColor").value;
         const font = document.getElementById("fontSelect").value;
+        const fontSize = parseInt(document.getElementById("fontSizeSelect").value); // 定義字體大小
         const arrayBuffer = await file.arrayBuffer();
         const result = await mammoth.extractRawText({ arrayBuffer });
         const text = result.value;
@@ -174,7 +185,7 @@
           if (para.trim() === "") {
             emptyLineCount++;
             if (emptyLineCount >= 2 && currentPageText.trim()) {
-              addSlideWithText(pptx, currentPageText, textColor, bgColor, font);
+              addSlideWithText(pptx, currentPageText, textColor, bgColor, font, fontSize); // 傳遞字體大小
               currentPageText = "";
               charCount = 0;
             }
@@ -188,7 +199,7 @@
             currentPageText += char;
             charCount++;
             if (charCount >= wordsPerPage) {
-              addSlideWithText(pptx, currentPageText, textColor, bgColor, font);
+              addSlideWithText(pptx, currentPageText, textColor, bgColor, font, fontSize); // 傳遞字體大小
               currentPageText = "";
               charCount = 0;
             }
@@ -196,7 +207,7 @@
         }
 
         if (currentPageText.trim()) {
-          addSlideWithText(pptx, currentPageText, textColor, bgColor, font);
+          addSlideWithText(pptx, currentPageText, textColor, bgColor, font, fontSize); // 傳遞字體大小
         }
 
         await pptx.writeFile({ fileName: file.name.replace(/\.[^/.]+$/, "") + ".pptx" });
@@ -208,13 +219,13 @@
       }
     }
 
-    function addSlideWithText(pptx, content, textColor, bgColor, font) {
+    function addSlideWithText(pptx, content, textColor, bgColor, font, fontSize) { // 接收字體大小
       const slide = pptx.addSlide();
       slide.background = { color: bgColor };
 
       slide.addText(content, {
         x: 1, y: 1, w: 8, h: 5,
-        fontSize: 24,
+        fontSize: fontSize, // 使用選擇的字體大小
         align: "center",
         color: textColor,
         fontFace: font,
