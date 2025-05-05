@@ -1,0 +1,264 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+  <meta charset="UTF-8" />
+  <title>Word 轉 PPTX</title>
+  <script src="mammoth.browser.min.js"></script>
+  <script src="pptxgen.bundle.js"></script>
+  <style>
+    body {
+      font-family: "Microsoft JhengHei", sans-serif;
+      max-width: 800px;
+      margin: 40px auto;
+      padding: 20px;
+      background: #f5f5f5;
+      border-radius: 12px;
+      box-shadow: 0 0 12px rgba(0, 0, 0, 0.15);
+    }
+    h1 {
+      color: #333;
+    }
+    label {
+      font-weight: bold;
+    }
+    input[type="number"],
+    input[type="file"] {
+      margin-bottom: 10px;
+      display: block;
+    }
+    .color-options {
+      display: flex;
+      justify-content: space-between;
+      margin-bottom: 10px;
+    }
+    input[type="color"] {
+      margin-bottom: 10px;
+    }
+    select {
+      margin-bottom: 10px;
+      padding: 8px;
+      font-size: 16px;
+      border-radius: 8px;
+      border: 1px solid #ccc;
+      background-color: #fff;
+      cursor: pointer;
+      transition: border-color 0.3s, box-shadow 0.3s;
+    }
+    select:focus {
+      border-color: #08e33b;
+      box-shadow: 0 0 5px rgba(8, 227, 59, 0.5);
+      outline: none;
+    }
+    button {
+      margin-top: 10px;
+      padding: 8px 16px;
+      font-size: 16px;
+      background: #08e33b;
+      color: white;
+      border: none;
+      border-radius: 8px;
+      cursor: pointer;
+    }
+    button:hover {
+      background: #f61505e9;
+    }
+    #status {
+      margin-top: 15px;
+    }
+  </style>
+</head>
+<body>
+  <h1 style="background-color: #08e33b; color: white;">Word轉 PowerPoint</h1>
+
+  <label for="wordFile">選擇 Word 文件：</label>
+  <input type="file" id="wordFile" accept=".docx" />
+
+  <div class="color-options">
+    <div>
+      <label for="textColor">文字顏色：</label>
+      <input type="color" id="textColor" value="#000000" />
+    </div>
+    <div>
+      <label for="bgColor">背景顏色：</label>
+      <input type="color" id="bgColor" value="#ffffff" />
+    </div>
+  </div>
+
+  <label for="fontSelect">字型：</label>
+  <select id="fontSelect"></select>
+
+  <label for="textAlignSelect">文字對齊：</label>
+  <select id="textAlignSelect">
+    <option value="left">靠左</option>
+    <option value="center" selected>置中</option>
+    <option value="right">靠右</option>
+  </select>
+
+  <label for="fontSizeSelect">字體大小：</label>
+  <select id="fontSizeSelect">
+    <option value="32">32</option>
+    <option value="36">36</option>
+    <option value="40">40</option>
+    <option value="44" selected>44</option>
+    <option value="48">48</option>
+    <option value="52">52</option>
+  </select>
+
+  <button onclick="convertWordToPPT()">轉換成 PPTX</button>
+
+  <div id="status"></div>
+
+  <!-- 使用說明 -->
+  <div id="instructions" style="margin-top: 20px; padding: 20px; background-color: #f0f0f0; border-radius: 12px; box-shadow: 0 2px 4px rgba(0,0,0,0.1);">
+    <h2 style="color: #333; margin-bottom: 15px;">使用說明</h2>
+    <p style="line-height: 1.6;">這個工具可以將Word文件轉換為PowerPoint簡報。您可以自訂字型、文字顏色、背景顏色和文字對齊方式，打造專業的簡報效果。</p>
+    <ol style="margin-left: 20px; line-height: 1.6;">
+      <li><strong>選擇 Word 文件：</strong>點擊「選擇 Word 文件」按鈕，選擇一個`.docx`格式的Word文件。</li>
+      <li><strong>設定文字和背景顏色：</strong>使用顏色選擇器來設定簡報中的文字和背景顏色。</li>
+      <li><strong>選擇字型：</strong>從下拉選單中選擇合適的中文字型。</li>
+      <li><strong>調整文字對齊：</strong>選擇文字的對齊方式（靠左、置中或靠右），以符合您的排版需求。</li>
+      <li><strong>選擇字體大小：</strong>根據內容多寡選擇適當的字體大小。</li>
+      <li><strong>開始轉換：</strong>點擊「轉換成 PPTX」按鈕開始轉換，狀態欄會顯示處理進度。</li>
+      <li><strong>完成下載：</strong>轉換完成後，系統會自動下載生成的PPTX文件。</li>
+    </ol>
+    <div style="background-color: #fff; padding: 15px; border-radius: 8px; margin-top: 15px;">
+      <h3 style="color: #333; margin-bottom: 10px;">換頁規則說明</h3>
+      <p>系統會根據選擇的字體大小自動計算每頁的最大字數，以確保最佳的閱讀效果：</p>
+      <ul style="list-style-type: none; padding-left: 0;">
+        <li>• 52號字體：每頁60字</li>
+        <li>• 48號字體：每頁77字</li>
+        <li>• 44號字體：每頁96字（預設）</li>
+        <li>• 40號字體：每頁112字</li>
+        <li>• 36號字體：每頁120字</li>
+        <li>• 32號字體：每頁153字</li>
+      </ul>
+    </div>
+    <p style="margin-top: 15px; color: #666;">注意：請確保上傳的文件為`.docx`格式。如果轉換失敗，請檢查文件格式是否正確。</p>
+  </div>
+
+  <script>
+    const fontSizeLimits = {
+      "52": 60,
+      "48": 77,
+      "44": 96,
+      "40": 112,
+      "36": 120,
+      "32": 153
+    };
+
+    const chineseFonts = [
+      "微軟正黑體", "標楷體", "細明體", "宅在家麥克筆", "華康中黑體",
+      "華康仿宋體", "華康細明體", "新細明體", "@標楷體"
+    ];
+
+    const fontSelect = document.getElementById("fontSelect");
+
+    // 預設提示選項
+    const defaultOption = document.createElement("option");
+    defaultOption.textContent = "請選擇字型";
+    defaultOption.disabled = true;
+    defaultOption.selected = true;
+    fontSelect.appendChild(defaultOption);
+
+    // 加入每個字型選項，並顯示中文範例
+    chineseFonts.forEach(font => {
+      const option = document.createElement("option");
+      option.value = font;
+      option.textContent = `中文 - ${font}`;
+      option.style.fontFamily = font;
+      fontSelect.appendChild(option);
+    });
+
+    async function convertWordToPPT() {
+      const fileInput = document.getElementById("wordFile");
+      const status = document.getElementById("status");
+
+      if (!fileInput.files.length) {
+        status.textContent = "請上傳 Word 文件";
+        status.style.color = "red";
+        return;
+      }
+
+      const file = fileInput.files[0];
+      status.textContent = `正在處理：${file.name}`;
+      status.style.color = "blue";
+
+      try {
+        const textColor = document.getElementById("textColor").value;
+        const bgColor = document.getElementById("bgColor").value;
+        const font = document.getElementById("fontSelect").value;
+        const fontSize = parseInt(document.getElementById("fontSizeSelect").value);
+        const arrayBuffer = await file.arrayBuffer();
+        const result = await mammoth.extractRawText({ arrayBuffer });
+        const text = result.value;
+
+        const pptx = new PptxGenJS();
+        pptx.layout = "LAYOUT_4x3";
+
+        let currentPageText = "";
+        let emptyLineCount = 0;
+        const paragraphs = text.split("\n");
+
+        for (const para of paragraphs) {
+          if (para.trim() === "") {
+            emptyLineCount++;
+            if (emptyLineCount >= 2 && currentPageText.trim()) {
+              addSlideWithText(pptx, currentPageText, textColor, bgColor, font, fontSize);
+              currentPageText = "";
+            }
+            continue;
+          } else {
+            emptyLineCount = 0;
+          }
+
+          currentPageText += para + "\n";
+        }
+
+        if (currentPageText.trim()) {
+          addSlideWithText(pptx, currentPageText, textColor, bgColor, font, fontSize);
+        }
+
+        await pptx.writeFile({ fileName: file.name.replace(/\.[^/.]+$/, "") + ".pptx" });
+        status.textContent = "轉換完成！";
+        status.style.color = "green";
+      } catch (err) {
+        status.textContent = "轉換失敗：" + err.message;
+        status.style.color = "red";
+      }
+    }
+
+    function addSlideWithText(pptx, content, textColor, bgColor, font, fontSize) {
+      const charLimit = fontSizeLimits[fontSize.toString()];
+      const contentChars = content.replace(/\s+/g, ''); // 移除所有空白字符
+      
+      if (contentChars.length <= charLimit) {
+        // 如果內容未超過字數限制，直接添加一頁
+        addSingleSlide(pptx, content, textColor, bgColor, font, fontSize);
+      } else {
+        // 如果內容超過字數限制，分割內容並添加多頁
+        let currentPos = 0;
+        while (currentPos < contentChars.length) {
+          const chunk = contentChars.slice(currentPos, currentPos + charLimit);
+          addSingleSlide(pptx, chunk, textColor, bgColor, font, fontSize);
+          currentPos += charLimit;
+        }
+      }
+    }
+
+    function addSingleSlide(pptx, content, textColor, bgColor, font, fontSize) {
+      const slide = pptx.addSlide();
+      slide.background = { color: bgColor };
+      const textAlign = document.getElementById("textAlignSelect").value;
+
+      slide.addText(content, {
+        x: 1, y: 1, w: 8, h: 5,
+        fontSize: fontSize,
+        align: textAlign,
+        color: textColor,
+        fontFace: font,
+        fill: { color: bgColor }
+      });
+    }
+  </script>
+</body>
+</html>
