@@ -73,6 +73,9 @@
   <label for="wordFile">選擇 Word 文件：</label>
   <input type="file" id="wordFile" accept=".docx" />
 
+  <label for="textInput">或貼上文字內容：</label>
+  <textarea id="textInput" rows="5" style="width: 100%; margin-bottom: 10px;"></textarea>
+
   <div class="color-options">
     <div>
       <label for="textColor">文字顏色：</label>
@@ -171,26 +174,34 @@
 
     async function convertWordToPPT() {
       const fileInput = document.getElementById("wordFile");
+      const textInput = document.getElementById("textInput");
       const status = document.getElementById("status");
 
-      if (!fileInput.files.length) {
-        status.textContent = "請上傳 Word 文件";
+      if (!fileInput.files.length && !textInput.value.trim()) {
+        status.textContent = "請上傳 Word 文件或貼上文字內容";
         status.style.color = "red";
         return;
       }
 
-      const file = fileInput.files[0];
-      status.textContent = `正在處理：${file.name}`;
-      status.style.color = "blue";
-
       try {
+        let text = "";
+        if (fileInput.files.length) {
+          const file = fileInput.files[0];
+          status.textContent = `正在處理：${file.name}`;
+          status.style.color = "blue";
+          const arrayBuffer = await file.arrayBuffer();
+          const result = await mammoth.extractRawText({ arrayBuffer });
+          text = result.value;
+        } else {
+          status.textContent = "正在處理貼上文字...";
+          status.style.color = "blue";
+          text = textInput.value;
+        }
+
         const textColor = document.getElementById("textColor").value;
         const bgColor = document.getElementById("bgColor").value;
         const font = document.getElementById("fontSelect").value;
         const fontSize = parseInt(document.getElementById("fontSizeSelect").value);
-        const arrayBuffer = await file.arrayBuffer();
-        const result = await mammoth.extractRawText({ arrayBuffer });
-        const text = result.value;
 
         const pptx = new PptxGenJS();
         pptx.layout = "LAYOUT_4x3";
@@ -218,7 +229,13 @@
           addSlideWithText(pptx, currentPageText, textColor, bgColor, font, fontSize);
         }
 
-        await pptx.writeFile({ fileName: file.name.replace(/\.[^/.]+$/, "") + ".pptx" });
+        const fileName = (fileInput.files.length ? 
+          fileInput.files[0].name.replace(/\.[^/.]+$/, "") :
+          text.substring(0, 4)) + 
+          new Date().getMinutes().toString().padStart(2, '0') + 
+          new Date().getSeconds().toString().padStart(2, '0') + ".pptx";
+          
+        await pptx.writeFile({ fileName });
         status.textContent = "轉換完成！";
         status.style.color = "green";
       } catch (err) {
