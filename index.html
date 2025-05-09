@@ -107,6 +107,12 @@
     <option value="52">52</option>
   </select>
 
+  <label for="layoutSelect">選擇版面比例：</label>
+  <select id="layoutSelect">
+    <option value="LAYOUT_4x3" selected>4:3</option>
+    <option value="LAYOUT_16x9">16:9</option>
+  </select>
+
   <button onclick="convertWordToPPT()">轉換成 PPTX</button>
 
   <div id="status"></div>
@@ -128,14 +134,12 @@
 
     const fontSelect = document.getElementById("fontSelect");
 
-    // 預設提示選項
     const defaultOption = document.createElement("option");
     defaultOption.textContent = "請選擇字型";
     defaultOption.disabled = true;
     defaultOption.selected = true;
     fontSelect.appendChild(defaultOption);
 
-    // 加入每個字型選項，並顯示中文範例
     chineseFonts.forEach(font => {
       const option = document.createElement("option");
       option.value = font;
@@ -151,6 +155,7 @@
       const fileInput = document.getElementById("wordFile");
       const textInput = document.getElementById("textInput");
       const status = document.getElementById("status");
+      const layoutSelect = document.getElementById("layoutSelect"); // 版面比例選擇器
 
       const file = fileInput.files.length ? fileInput.files[0] : null;
       const text = textInput.value.trim();
@@ -165,7 +170,6 @@
       let content = "";
 
       if (file && text) {
-        // 同時存在檔案與文字時，選擇最近更新的內容
         useFile = file.lastModified > (previousFileLastModified || 0);
       } else if (file) {
         useFile = true;
@@ -194,7 +198,7 @@
         const fontSize = parseInt(document.getElementById("fontSizeSelect").value);
 
         const pptx = new PptxGenJS();
-        pptx.layout = "LAYOUT_4x3";
+        pptx.layout = layoutSelect.value; // 動態設置版面比例
 
         let currentPageText = "";
         let emptyLineCount = 0;
@@ -219,10 +223,9 @@
           addSlideWithText(pptx, currentPageText, textColor, bgColor, font, fontSize);
         }
 
-        // 自動生成檔案名稱
         const fileName = useFile
-          ? file.name.replace(/\.[^/.]+$/, "") // 使用檔案名稱
-          : text.substring(0, 10).replace(/\s+/g, "_") // 使用文字的前10個字並移除空白
+          ? file.name.replace(/\.[^/.]+$/, "")
+          : text.substring(0, 10).replace(/\s+/g, "_")
             + "_"
             + new Date().getMinutes().toString().padStart(2, '0')
             + new Date().getSeconds().toString().padStart(2, '0') 
