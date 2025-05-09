@@ -69,22 +69,12 @@
       background: #e3f2fd;
       padding: 10px;
       border-left: 5px solid #2196f3;
-      margin-bottom: 20px;
+      margin-top: 20px;
     }
   </style>
 </head>
 <body>
   <h1 style="background-color: #08e33b; color: white;">Word轉 PowerPoint</h1>
-
-  <div class="instructions">
-    <p>此工具可將 Word 文件或貼上的文字內容轉換為 PowerPoint 簡報！</p>
-    <ul>
-      <li><strong>步驟 1：</strong>選擇 Word 文件或貼上文字內容。</li>
-      <li><strong>步驟 2：</strong>設定文字顏色、背景顏色、字型、對齊方式及字體大小。</li>
-      <li><strong>步驟 3：</strong>選擇簡報版面比例（4:3 或 16:9）。</li>
-      <li><strong>步驟 4：</strong>點擊「轉換成 PPTX」按鈕生成簡報。</li>
-    </ul>
-  </div>
 
   <label for="wordFile">選擇 Word 文件：</label>
   <input type="file" id="wordFile" accept=".docx" />
@@ -133,6 +123,16 @@
 
   <div id="status"></div>
 
+  <div class="instructions">
+    <p>此工具可將 Word 文件或貼上的文字內容轉換為 PowerPoint 簡報！</p>
+    <ul>
+      <li><strong>步驟 1：</strong>選擇 Word 文件或貼上文字內容。</li>
+      <li><strong>步驟 2：</strong>設定文字顏色、背景顏色、字型、對齊方式及字體大小。</li>
+      <li><strong>步驟 3：</strong>選擇簡報版面比例（4:3 或 16:9）。</li>
+      <li><strong>步驟 4：</strong>點擊「轉換成 PPTX」按鈕生成簡報。</li>
+    </ul>
+  </div>
+
   <script>
     const fontSizeLimits = {
       "52": 60,
@@ -159,5 +159,133 @@
     chineseFonts.forEach(font => {
       const option = document.createElement("option");
       option.value = font;
-      option](#)
-
+      option.textContent = `中文 - ${font}`;
+      option.style.fontFamily = font;
+      fontSelect.appendChild(option);
+    });
+
+    let previousFileLastModified = null;
+    let previousText = "";
+
+    async function convertWordToPPT() {
+      const fileInput = document.getElementById("wordFile");
+      const textInput = document.getElementById("textInput");
+      const status = document.getElementById("status");
+      const layoutSelect = document.getElementById("layoutSelect");
+
+      const file = fileInput.files.length ? fileInput.files[0] : null;
+      const text = textInput.value.trim();
+
+      if (!file && !text) {
+        status.textContent = "請上傳 Word 文件或貼上文字內容";
+        status.style.color = "red";
+        return;
+      }
+
+      let useFile = false;
+      let content = "";
+
+      if (file && text) {
+        useFile = file.lastModified > (previousFileLastModified || 0);
+      } else if (file) {
+        useFile = true;
+      }
+
+      try {
+        if (useFile) {
+          previousFileLastModified = file.lastModified;
+          status.textContent = `正在處理檔案：${file.name}`;
+          status.style.color = "blue";
+
+          const arrayBuffer = await file.arrayBuffer();
+          const result = await mammoth.extractRawText({ arrayBuffer });
+          content = result.value;
+        } else {
+          previousText = text;
+          status.textContent = "正在處理貼上文字...";
+          status.style.color = "blue";
+
+          content = text;
+        }
+
+        const textColor = document.getElementById("textColor").value;
+        const bgColor = document.getElementById("bgColor").value;
+        const font = document.getElementById("fontSelect").value;
+        const fontSize = parseInt(document.getElementById("fontSizeSelect").value);
+
+        const pptx = new PptxGenJS();
+        pptx.layout = layoutSelect.value;
+
+        let currentPageText = "";
+        let emptyLineCount = 0;
+        const paragraphs = content.split("\n");
+
+        for (const para of paragraphs) {
+          if (para.trim() === "") {
+            emptyLineCount++;
+            if (emptyLineCount >= 2 && currentPageText.trim()) {
+              addSlideWithText(pptx, currentPageText, textColor, bgColor, font, fontSize);
+              currentPageText = "";
+            }
+            continue;
+          } else {
+            emptyLineCount = 0;
+          }
+
+          currentPageText += para + "\n";
+        }
+
+        if (currentPageText.trim()) {
+          addSlideWithText(pptx, currentPageText, textColor, bgColor, font, fontSize);
+        }
+
+        const fileName = useFile
+          ? file.name.replace(/\.[^/.]+$/, "")
+          : text.substring(0, 10).replace(/\s+/g, "_")
+            + "_"
+            + new Date().getMinutes().toString().padStart(2, '0')
+            + new Date().getSeconds().toString().padStart(2, '0') 
+            + ".pptx";
+
+        await pptx.writeFile({ fileName });
+        status.textContent = "轉換完成！";
+        status.style.color = "green";
+      } catch (err) {
+        status.textContent = "轉換失敗：" + err.message;
+        status.style.color = "red";
+      }
+    }
+
+    function addSlideWithText(pptx, content, textColor, bgColor, font, fontSize) {
+      const charLimit = fontSizeLimits[fontSize.toString()];
+      const contentChars = content.replace(/\s+/g, '');
+
+      if (contentChars.length <= charLimit) {
+        addSingleSlide(pptx, content, textColor, bgColor, font, fontSize);
+      } else {
+        let currentPos = 0;
+        while (currentPos < contentChars.length) {
+          const chunk = contentChars.slice(currentPos, currentPos + charLimit);
+          addSingleSlide(pptx, chunk, textColor, bgColor, font, fontSize);
+          currentPos += charLimit;
+        }
+      }
+    }
+
+    function addSingleSlide(pptx, content, textColor, bgColor, font, fontSize) {
+      const slide = pptx.addSlide();
+      slide.background = { color: bgColor };
+      const textAlign = document.getElementById("textAlignSelect").value;
+
+      slide.addText(content, {
+        x: 1, y: 1, w: 8, h: 5,
+        fontSize: fontSize,
+        align: textAlign,
+        color: textColor,
+        fontFace: font,
+        fill: { color: bgColor }
+      });
+    }
+  </script>
+</body>
+</html>
