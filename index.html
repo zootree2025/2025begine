@@ -111,34 +111,6 @@
 
   <div id="status"></div>
 
-  <!-- 使用說明 -->
-  <div id="instructions" style="margin-top: 20px; padding: 20px; background-color: #f0f0f0; border-radius: 12px; box-shadow: 0 2px 4px rgba(0,0,0,0.1);">
-    <h2 style="color: #333; margin-bottom: 15px;">使用說明</h2>
-    <p style="line-height: 1.6;">這個工具可以將Word文件轉換為PowerPoint簡報。您可以自訂字型、文字顏色、背景顏色和文字對齊方式，打造專業的簡報效果。</p>
-    <ol style="margin-left: 20px; line-height: 1.6;">
-      <li><strong>選擇 Word 文件：</strong>點擊「選擇 Word 文件」按鈕，選擇一個`.docx`格式的Word文件。</li>
-      <li><strong>設定文字和背景顏色：</strong>使用顏色選擇器來設定簡報中的文字和背景顏色。</li>
-      <li><strong>選擇字型：</strong>從下拉選單中選擇合適的中文字型。</li>
-      <li><strong>調整文字對齊：</strong>選擇文字的對齊方式（靠左、置中或靠右），以符合您的排版需求。</li>
-      <li><strong>選擇字體大小：</strong>根據內容多寡選擇適當的字體大小。</li>
-      <li><strong>開始轉換：</strong>點擊「轉換成 PPTX」按鈕開始轉換，狀態欄會顯示處理進度。</li>
-      <li><strong>完成下載：</strong>轉換完成後，系統會自動下載生成的PPTX文件。</li>
-    </ol>
-    <div style="background-color: #fff; padding: 15px; border-radius: 8px; margin-top: 15px;">
-      <h3 style="color: #333; margin-bottom: 10px;">換頁規則說明</h3>
-      <p>系統會根據選擇的字體大小自動計算每頁的最大字數，以確保最佳的閱讀效果：</p>
-      <ul style="list-style-type: none; padding-left: 0;">
-        <li>• 52號字體：每頁60字</li>
-        <li>• 48號字體：每頁77字</li>
-        <li>• 44號字體：每頁96字（預設）</li>
-        <li>• 40號字體：每頁112字</li>
-        <li>• 36號字體：每頁120字</li>
-        <li>• 32號字體：每頁153字</li>
-      </ul>
-    </div>
-    <p style="margin-top: 15px; color: #666;">注意：請確保上傳的文件為`.docx`格式。如果轉換失敗，請檢查文件格式是否正確。</p>
-  </div>
-
   <script>
     const fontSizeLimits = {
       "52": 60,
@@ -172,30 +144,67 @@
       fontSelect.appendChild(option);
     });
 
+    let previousFileLastModified = null;
+    let previousText = "";
+
     async function convertWordToPPT() {
       const fileInput = document.getElementById("wordFile");
       const textInput = document.getElementById("textInput");
       const status = document.getElementById("status");
 
-      if (!fileInput.files.length && !textInput.value.trim()) {
+      const file = fileInput.files.length ? fileInput.files[0] : null;
+      const text = textInput.value.trim();
+
+      // 檢測是否有檔案或文字輸入
+      if (!file && !text) {
         status.textContent = "請上傳 Word 文件或貼上文字內容";
         status.style.color = "red";
         return;
       }
 
+      // 判斷檔案和文字的變動
+      let processFile = false;
+      let processText = false;
+
+      if (file) {
+        // 檢測檔案是否有變動
+        if (previousFileLastModified !== file.lastModified) {
+          processFile = true;
+        }
+      }
+
+      if (text) {
+        // 檢測文字框內容是否有變動
+        if (previousText !== text) {
+          processText = true;
+        }
+      }
+
+      // 優先選擇最近變動的項目
+      if (processFile && processText) {
+        processFile = file.lastModified > (previousFileLastModified || 0);
+        processText = !processFile;
+      }
+
       try {
-        let text = "";
-        if (fileInput.files.length) {
-          const file = fileInput.files[0];
-          status.textContent = `正在處理：${file.name}`;
+        let content = "";
+
+        if (processFile) {
+          // 處理上傳的檔案
+          previousFileLastModified = file.lastModified; // 更新檔案最後處理時間
+          status.textContent = `正在處理檔案：${file.name}`;
           status.style.color = "blue";
+
           const arrayBuffer = await file.arrayBuffer();
           const result = await mammoth.extractRawText({ arrayBuffer });
-          text = result.value;
-        } else {
+          content = result.value;
+        } else if (processText) {
+          // 處理貼上文字
+          previousText = text; // 更新文字框最後內容
           status.textContent = "正在處理貼上文字...";
           status.style.color = "blue";
-          text = textInput.value;
+
+          content = text;
         }
 
         const textColor = document.getElementById("textColor").value;
@@ -208,7 +217,7 @@
 
         let currentPageText = "";
         let emptyLineCount = 0;
-        const paragraphs = text.split("\n");
+        const paragraphs = content.split("\n");
 
         for (const para of paragraphs) {
           if (para.trim() === "") {
@@ -229,12 +238,12 @@
           addSlideWithText(pptx, currentPageText, textColor, bgColor, font, fontSize);
         }
 
-        const fileName = (fileInput.files.length ? 
-          fileInput.files[0].name.replace(/\.[^/.]+$/, "") :
+        const fileName = (file ? 
+          file.name.replace(/\.[^/.]+$/, "") :
           text.substring(0, 4)) + 
           new Date().getMinutes().toString().padStart(2, '0') + 
           new Date().getSeconds().toString().padStart(2, '0') + ".pptx";
-          
+
         await pptx.writeFile({ fileName });
         status.textContent = "轉換完成！";
         status.style.color = "green";
