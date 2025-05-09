@@ -219,11 +219,14 @@
           addSlideWithText(pptx, currentPageText, textColor, bgColor, font, fontSize);
         }
 
-        const fileName = (file ?
-          file.name.replace(/\.[^/.]+$/, "") :
-          text.substring(0, 4)) +
-          new Date().getMinutes().toString().padStart(2, '0') +
-          new Date().getSeconds().toString().padStart(2, '0') + ".pptx";
+        // 自動生成檔案名稱
+        const fileName = useFile
+          ? file.name.replace(/\.[^/.]+$/, "") // 使用檔案名稱
+          : text.substring(0, 10).replace(/\s+/g, "_") // 使用文字的前10個字並移除空白
+            + "_"
+            + new Date().getMinutes().toString().padStart(2, '0')
+            + new Date().getSeconds().toString().padStart(2, '0') 
+            + ".pptx";
 
         await pptx.writeFile({ fileName });
         status.textContent = "轉換完成！";
