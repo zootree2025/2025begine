@@ -155,52 +155,33 @@
       const file = fileInput.files.length ? fileInput.files[0] : null;
       const text = textInput.value.trim();
 
-      // 檢測是否有檔案或文字輸入
       if (!file && !text) {
         status.textContent = "請上傳 Word 文件或貼上文字內容";
         status.style.color = "red";
         return;
       }
 
-      // 判斷檔案和文字的變動
-      let processFile = false;
-      let processText = false;
+      let useFile = false;
+      let content = "";
 
-      if (file) {
-        // 檢測檔案是否有變動
-        if (previousFileLastModified !== file.lastModified) {
-          processFile = true;
-        }
-      }
-
-      if (text) {
-        // 檢測文字框內容是否有變動
-        if (previousText !== text) {
-          processText = true;
-        }
-      }
-
-      // 優先選擇最近變動的項目
-      if (processFile && processText) {
-        processFile = file.lastModified > (previousFileLastModified || 0);
-        processText = !processFile;
+      if (file && text) {
+        // 同時存在檔案與文字時，選擇最近更新的內容
+        useFile = file.lastModified > (previousFileLastModified || 0);
+      } else if (file) {
+        useFile = true;
       }
 
       try {
-        let content = "";
-
-        if (processFile) {
-          // 處理上傳的檔案
-          previousFileLastModified = file.lastModified; // 更新檔案最後處理時間
+        if (useFile) {
+          previousFileLastModified = file.lastModified;
           status.textContent = `正在處理檔案：${file.name}`;
           status.style.color = "blue";
 
           const arrayBuffer = await file.arrayBuffer();
           const result = await mammoth.extractRawText({ arrayBuffer });
           content = result.value;
-        } else if (processText) {
-          // 處理貼上文字
-          previousText = text; // 更新文字框最後內容
+        } else {
+          previousText = text;
           status.textContent = "正在處理貼上文字...";
           status.style.color = "blue";
 
@@ -238,10 +219,10 @@
           addSlideWithText(pptx, currentPageText, textColor, bgColor, font, fontSize);
         }
 
-        const fileName = (file ? 
+        const fileName = (file ?
           file.name.replace(/\.[^/.]+$/, "") :
-          text.substring(0, 4)) + 
-          new Date().getMinutes().toString().padStart(2, '0') + 
+          text.substring(0, 4)) +
+          new Date().getMinutes().toString().padStart(2, '0') +
           new Date().getSeconds().toString().padStart(2, '0') + ".pptx";
 
         await pptx.writeFile({ fileName });
@@ -255,13 +236,11 @@
 
     function addSlideWithText(pptx, content, textColor, bgColor, font, fontSize) {
       const charLimit = fontSizeLimits[fontSize.toString()];
-      const contentChars = content.replace(/\s+/g, ''); // 移除所有空白字符
-      
+      const contentChars = content.replace(/\s+/g, '');
+
       if (contentChars.length <= charLimit) {
-        // 如果內容未超過字數限制，直接添加一頁
         addSingleSlide(pptx, content, textColor, bgColor, font, fontSize);
       } else {
-        // 如果內容超過字數限制，分割內容並添加多頁
         let currentPos = 0;
         while (currentPos < contentChars.length) {
           const chunk = contentChars.slice(currentPos, currentPos + charLimit);
