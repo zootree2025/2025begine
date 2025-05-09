@@ -1,5 +1,6 @@
 <!DOCTYPE html>
 <html lang="zh-TW">
+
 <head>
   <meta charset="UTF-8" />
   <title>Word 轉 PPTX</title>
@@ -15,25 +16,31 @@
       border-radius: 12px;
       box-shadow: 0 0 12px rgba(0, 0, 0, 0.15);
     }
+
     h1 {
       color: #333;
     }
+
     label {
       font-weight: bold;
     }
+
     input[type="number"],
     input[type="file"] {
       margin-bottom: 10px;
       display: block;
     }
+
     .color-options {
       display: flex;
       justify-content: space-between;
       margin-bottom: 10px;
     }
+
     input[type="color"] {
       margin-bottom: 10px;
     }
+
     select {
       margin-bottom: 10px;
       padding: 8px;
@@ -44,11 +51,13 @@
       cursor: pointer;
       transition: border-color 0.3s, box-shadow 0.3s;
     }
+
     select:focus {
       border-color: #08e33b;
       box-shadow: 0 0 5px rgba(8, 227, 59, 0.5);
       outline: none;
     }
+
     button {
       margin-top: 10px;
       padding: 8px 16px;
@@ -59,12 +68,15 @@
       border-radius: 8px;
       cursor: pointer;
     }
+
     button:hover {
       background: #f61505e9;
     }
+
     #status {
       margin-top: 15px;
     }
+
     .instructions {
       background: #e3f2fd;
       padding: 10px;
@@ -73,14 +85,17 @@
     }
   </style>
 </head>
+
 <body>
   <h1 style="background-color: #08e33b; color: white;">Word轉 PowerPoint</h1>
 
   <label for="wordFile">選擇 Word 文件：</label>
   <input type="file" id="wordFile" accept=".docx" />
+  <button type="button" onclick="convertWordFileToPPT()" style="margin-left: 10px;">轉換檔案</button>
 
   <label for="textInput">或貼上文字內容：</label>
   <textarea id="textInput" rows="5" style="width: 100%; margin-bottom: 10px;"></textarea>
+  <button type="button" onclick="convertTextToPPT()" style="margin-left: 10px;">轉換文字</button>
 
   <div class="color-options">
     <div>
@@ -119,8 +134,6 @@
     <option value="LAYOUT_16x9">16:9</option>
   </select>
 
-  <button onclick="convertWordToPPT()">轉換成 PPTX</button>
-
   <div id="status"></div>
 
   <div class="instructions">
@@ -129,7 +142,7 @@
       <li><strong>步驟 1：</strong>選擇 Word 文件或貼上文字內容。</li>
       <li><strong>步驟 2：</strong>設定文字顏色、背景顏色、字型、對齊方式及字體大小。</li>
       <li><strong>步驟 3：</strong>選擇簡報版面比例（4:3 或 16:9）。</li>
-      <li><strong>步驟 4：</strong>點擊「轉換成 PPTX」按鈕生成簡報。</li>
+      <li><strong>步驟 4：</strong>點擊對應的「轉換」按鈕生成簡報。</li>
     </ul>
   </div>
 
@@ -167,47 +180,31 @@
     let previousFileLastModified = null;
     let previousText = "";
 
-    async function convertWordToPPT() {
+    async function convertWordFileToPPT() {
       const fileInput = document.getElementById("wordFile");
-      const textInput = document.getElementById("textInput");
       const status = document.getElementById("status");
       const layoutSelect = document.getElementById("layoutSelect");
 
       const file = fileInput.files.length ? fileInput.files[0] : null;
-      const text = textInput.value.trim();
 
-      if (!file && !text) {
-        status.textContent = "請上傳 Word 文件或貼上文字內容";
+      if (!file) {
+        status.textContent = "請選擇 Word 文件";
         status.style.color = "red";
         return;
       }
 
-      let useFile = false;
-      let content = "";
-
-      if (file && text) {
-        useFile = file.lastModified > (previousFileLastModified || 0);
-      } else if (file) {
-        useFile = true;
-      }
-
       try {
-        if (useFile) {
-          previousFileLastModified = file.lastModified;
-          status.textContent = `正在處理檔案：${file.name}`;
-          status.style.color = "blue";
+        previousFileLastModified = file.lastModified;
+        status.textContent = `正在處理檔案：${file.name}`;
+        status.style.color = "blue";
 
-          const arrayBuffer = await file.arrayBuffer();
-          const result = await mammoth.extractRawText({ arrayBuffer });
-          content = result.value;
-        } else {
-          previousText = text;
-          status.textContent = "正在處理貼上文字...";
-          status.style.color = "blue";
+        const arrayBuffer = await file.arrayBuffer();
+        const result = await mammoth.extractRawText({
+          arrayBuffer
+        });
+        const content = result.value;
 
-          content = text;
-        }
-
+        // 提取共用樣式設定
         const textColor = document.getElementById("textColor").value;
         const bgColor = document.getElementById("bgColor").value;
         const font = document.getElementById("fontSelect").value;
@@ -239,17 +236,80 @@
           addSlideWithText(pptx, currentPageText, textColor, bgColor, font, fontSize);
         }
 
-        const fileName = useFile
-          ? file.name.replace(/\.[^/.]+$/, "")
-          : text.substring(0, 10).replace(/\s+/g, "_")
-            + "_"
-            + new Date().getMinutes().toString().padStart(2, '0')
-            + new Date().getSeconds().toString().padStart(2, '0') 
-            + ".pptx";
+        const fileName = file.name.replace(/\.[^/.]+$/, "") + ".pptx";
 
-        await pptx.writeFile({ fileName });
+        await pptx.writeFile({
+          fileName
+        });
         status.textContent = "轉換完成！";
         status.style.color = "green";
+
+      } catch (err) {
+        status.textContent = "轉換失敗：" + err.message;
+        status.style.color = "red";
+      }
+    }
+
+    async function convertTextToPPT() {
+      const textInput = document.getElementById("textInput");
+      const status = document.getElementById("status");
+      const layoutSelect = document.getElementById("layoutSelect");
+
+      const text = textInput.value.trim();
+
+      if (!text) {
+        status.textContent = "請貼上文字內容";
+        status.style.color = "red";
+        return;
+      }
+
+      try {
+        previousText = text;
+        status.textContent = "正在處理貼上文字...";
+        status.style.color = "blue";
+
+        const content = text;
+
+        // 提取共用樣式設定
+        const textColor = document.getElementById("textColor").value;
+        const bgColor = document.getElementById("bgColor").value;
+        const font = document.getElementById("fontSelect").value;
+        const fontSize = parseInt(document.getElementById("fontSizeSelect").value);
+
+        const pptx = new PptxGenJS();
+        pptx.layout = layoutSelect.value;
+
+        let currentPageText = "";
+        let emptyLineCount = 0;
+        const paragraphs = content.split("\n");
+
+        for (const para of paragraphs) {
+          if (para.trim() === "") {
+            emptyLineCount++;
+            if (emptyLineCount >= 2 && currentPageText.trim()) {
+              addSlideWithText(pptx, currentPageText, textColor, bgColor, font, fontSize);
+              currentPageText = "";
+            }
+            continue;
+          } else {
+            emptyLineCount = 0;
+          }
+
+          currentPageText += para + "\n";
+        }
+
+        if (currentPageText.trim()) {
+          addSlideWithText(pptx, currentPageText, textColor, bgColor, font, fontSize);
+        }
+
+        const fileName = text.substring(0, 10).replace(/\s+/g, "_") + "_" + new Date().getMinutes().toString().padStart(2, '0') + new Date().getSeconds().toString().padStart(2, '0') + ".pptx";
+
+        await pptx.writeFile({
+          fileName
+        });
+        status.textContent = "轉換完成！";
+        status.style.color = "green";
+
       } catch (err) {
         status.textContent = "轉換失敗：" + err.message;
         status.style.color = "red";
@@ -274,18 +334,26 @@
 
     function addSingleSlide(pptx, content, textColor, bgColor, font, fontSize) {
       const slide = pptx.addSlide();
-      slide.background = { color: bgColor };
+      slide.background = {
+        color: bgColor
+      };
       const textAlign = document.getElementById("textAlignSelect").value;
 
       slide.addText(content, {
-        x: 1, y: 1, w: 8, h: 5,
+        x: 1,
+        y: 1,
+        w: 8,
+        h: 5,
         fontSize: fontSize,
         align: textAlign,
         color: textColor,
         fontFace: font,
-        fill: { color: bgColor }
+        fill: {
+          color: bgColor
+        }
       });
     }
   </script>
 </body>
+
 </html>
